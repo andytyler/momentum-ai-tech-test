@@ -1,12 +1,17 @@
 import express from "express";
+import { getFilesInFolder } from "../server/reader";
+import { doesHTMLContainDriftWidget } from "../server/processor";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/drift', async (req, res) => {
-  
-  res.send([
-    { companyName: '', hasDrift: false}
-  ]);
-})
+router.get("/drift", async (req, res) => {
+	const drift = await getFilesInFolder(200, "../data").then((result) => {
+		return result.map((item, index, array) => {
+			return doesHTMLContainDriftWidget(item);
+		});
+	});
 
-export default router; 
+	res.send(drift);
+});
+
+export default router;
