@@ -1,15 +1,11 @@
 import express from "express";
-import { getFilesInFolder } from "../server/reader";
 import { doesHTMLContainDriftWidget } from "../server/processor";
+import { doitall } from "../server/pupeteer";
 
 const router = express.Router();
 
 router.get("/drift", async (req, res) => {
-	const drift = await getFilesInFolder(200, "../data").then((result) => {
-		return result.map((item, index, array) => {
-			return doesHTMLContainDriftWidget(item);
-		});
-	});
+	const drift = await doitall(true);
 
 	res.send(drift);
 });

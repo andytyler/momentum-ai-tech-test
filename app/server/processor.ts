@@ -1,17 +1,48 @@
-import { type HtmlWithFile, getFilesInFolder } from "./reader";
+import { URL } from "url";
+// import { type HtmlWithFile, getFilesInFolder } from "./reader";
+import * as cheerio from "cheerio";
+import { readFile, readdir } from "fs/promises";
+import { extname, join } from "path";
 
-type DriftResponse = {
+export type HtmlWithFile = {
+	html: string;
+	file: string;
+};
+
+export type DriftResponse = {
 	companyName: string;
 	hasDrift: boolean;
 };
+export async function getFilesInFolder(take_until_index: number, relativePath: string): Promise<HtmlWithFile[]> {
+	// const __filename = fileURLToPath(import.meta.url);
+	const folder_path = join(__dirname, relativePath);
 
-export function doesHTMLContainDriftWidget(item: HtmlWithFile): DriftResponse {
-	const companyName: string = item.file.split(".")[0];
+	const files = await readdir(folder_path);
+	const html_file_array: HtmlWithFile[] = [];
 
-	const hasDrift: boolean = checkForString(item.html, "https://js.driftt.com/include/");
+	for (const [i, file] of files.entries()) {
+		const filepath = join(folder_path, file);
+		const extension = extname(filepath);
+		if (extension === ".html") {
+			const html: string = await readFile(filepath, "utf-8");
+			html_file_array.push({ html, file });
+		}
+		if (take_until_index === i) {
+			return html_file_array;
+		}
+	}
 
-	return { companyName, hasDrift };
+	return html_file_array;
 }
+
+// load pupeteer page
+// check for iframe
+// wait for iframe to load
+// check for drift widget
+// return true/false
+
+let total_positive = 0;
+let total_negative = 0;
 
 function checkForString(html: string, string: string): boolean {
 	if (html?.includes(string)) {
@@ -20,28 +51,35 @@ function checkForString(html: string, string: string): boolean {
 	return false;
 }
 
-// function getStringTag(html: string, search_string: string) {
-// 	const $ = cheerio.load(html);
+export function doesHTMLContainDriftWidget(item: HtmlWithFile): DriftResponse {
+	const companyName: string = item.file.split(".")[0];
 
-// 	const elements = $(`*:contains(${search_string})`);
+	const hasDriftFromCDN: boolean = checkForString(item.html, "https://js.driftt.com/include/");
+	if (hasDriftFromCDN) {
+		total_positive++;
+	} else {
+		total_negative++;
+	}
 
-// 	let type_list: string[] = [];
-// 	elements.each((index, element) => {
-// 		type_list.push(element.type);
-// 	});
-// 	return type_list.length > 0;
-// }
+	console.log(companyName.padEnd(20), hasDriftFromCDN); //test.toString().padEnd(15)
 
-// function checkForScript(html: string) {
-// 	const $ = cheerio.load(html);
-// 	let drift_js = $("link");
+	return { companyName, hasDrift: hasDriftFromCDN };
+}
 
-// 	let list: boolean[] = [];
-// 	drift_js.each((index, element) => {
-// 		if ($(element).toString().includes("drift")) {
-// 			list.push(true);
-// 		}
-// 	});
+function constructUrlFromFileName(fileName: string): string {}
 
-// 	return list.length > 0;
-// }
+function loadPupeteer(url: string) {
+	const $ = cheerio.load(html);
+	const iframe = $("iframe");
+	if (iframe.length > 0) {
+		console.log("iframe found");
+	}
+}
+
+getFilesInFolder(-1, "../data").then((result) => {
+	result.map((item, index, array) => {
+		doesHTMLContainDriftWidget(item);
+	});
+	console.log("total positive: ", total_positive);
+	console.log("total negative: ", total_negative);
+});
