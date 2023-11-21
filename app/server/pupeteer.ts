@@ -37,7 +37,7 @@ function checkForString(html: string, string: string): boolean {
 	return false;
 }
 
-export async function doitall(headless: boolean = true): Promise<DriftResponse[]> {
+export async function determineDriftOnAllSites(headless: boolean = true): Promise<DriftResponse[]> {
 	const array = await constructUrlArray("../data");
 	const driftResultArray = [];
 
@@ -111,7 +111,7 @@ export async function doitall(headless: boolean = true): Promise<DriftResponse[]
 		if (successWithIFrame || successConfirmationWithIFrameTitle || successWithString || successWithScript) {
 			decision = true;
 		}
-		driftResultArray.push({ company: url, hasDrift: decision });
+		driftResultArray.push({ companyName: url, hasDrift: decision });
 	}
 	await browser.close();
 	console.log(driftResultArray);
